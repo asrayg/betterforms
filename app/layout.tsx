@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "BetterForms - Google Forms Lite",
   description: "Create and share forms with voice answering",
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({

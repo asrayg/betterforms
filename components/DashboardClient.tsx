@@ -31,7 +31,7 @@ export function DashboardClient({ initialForms }: DashboardClientProps) {
   if (forms.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">You haven't created any forms yet.</p>
+        <p className="text-gray-500 mb-4">You haven&apos;t created any forms yet.</p>
         <Link
           href="/dashboard/forms/new"
           className="text-primary-600 hover:text-primary-700 font-medium"

@@ -475,7 +475,7 @@ export function FormSubmission({ formId, questions, settings }: FormSubmissionPr
                     updateAnswer(
                       question.id!,
                       e.target.value,
-                      currentAnswer?.audio_url,
+                      currentAnswer?.audio_url || undefined,
                       undefined
                     );
                   }}

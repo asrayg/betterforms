@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -43,8 +44,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <div className="flex flex-col items-center">
+          <Image
+            src="/logo.png"
+            alt="BetterForms"
+            width={80}
+            height={80}
+            className="h-20 w-auto mb-4"
+          />
+          <h2 className="text-center text-3xl font-extrabold text-gray-900">
             BetterForms
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -93,6 +101,34 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+          <div className="flex flex-col items-center">
+            <Image
+              src="/logo.png"
+              alt="BetterForms"
+              width={80}
+              height={80}
+              className="h-20 w-auto mb-4"
+            />
+            <h2 className="text-center text-3xl font-extrabold text-gray-900">
+              BetterForms
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Loading...
+            </p>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
 

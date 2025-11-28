@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import { LogoutButton } from '@/components/LogoutButton';
+import Image from 'next/image';
 
 export default async function DashboardLayout({
   children,
@@ -23,8 +24,15 @@ export default async function DashboardLayout({
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <Link href="/dashboard" className="text-xl font-bold text-primary-600">
-              BetterForms
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <Image
+                src="/logo.png"
+                alt="BetterForms"
+                width={32}
+                height={32}
+                className="h-8 w-auto"
+              />
+              <span className="text-xl font-bold text-primary-600">BetterForms</span>
             </Link>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">{user.email}</span>

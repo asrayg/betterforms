@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Mic, Square, Play, Pause } from 'lucide-react';
 
 interface VoiceRecorderProps {

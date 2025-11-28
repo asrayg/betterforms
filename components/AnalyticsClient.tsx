@@ -198,9 +198,10 @@ export function AnalyticsClient({ formId }: AnalyticsClientProps) {
       )}
 
       {/* Question Analytics */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900">Question Analytics</h2>
-        {analytics.question_analytics.map((qa) => (
+      {analytics.question_analytics.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-lg font-semibold text-gray-900">Question Analytics</h2>
+          {analytics.question_analytics.map((qa) => (
           <div
             key={qa.question_id}
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
@@ -255,7 +256,7 @@ export function AnalyticsClient({ formId }: AnalyticsClientProps) {
                             cy="50%"
                             labelLine={false}
                             label={({ name, percent }) =>
-                              `${name}: ${(percent * 100).toFixed(0)}%`
+                              `${name}: ${((percent || 0) * 100).toFixed(0)}%`
                             }
                             outerRadius={80}
                             fill="#8884d8"
@@ -293,7 +294,7 @@ export function AnalyticsClient({ formId }: AnalyticsClientProps) {
               </div>
             )}
           </div>
-          ))}
+        ))}
         </div>
       )}
 
