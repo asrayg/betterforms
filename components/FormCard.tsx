@@ -73,10 +73,16 @@ export function FormCard({ form, onDelete }: FormCardProps) {
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
           <div className="flex gap-4 text-sm text-gray-500">
             <Link
+              href={`/dashboard/forms/${form.id}/analytics`}
+              className="hover:text-primary-600"
+            >
+              Analytics
+            </Link>
+            <Link
               href={`/dashboard/forms/${form.id}/responses`}
               className="hover:text-primary-600"
             >
-              View Responses
+              Responses
             </Link>
             <Link
               href={`/f/${form.id}`}

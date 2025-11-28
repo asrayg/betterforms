@@ -37,23 +37,40 @@ export default function NewFormPage() {
       });
 
       if (!formRes.ok) {
-        throw new Error('Failed to create form');
+        const errorData = await formRes.json().catch(() => ({}));
+        console.error('Form creation error:', errorData);
+        throw new Error(errorData.error || 'Failed to create form');
       }
 
       const form = await formRes.json();
 
-      // Save questions
-      if (formData.questions.length > 0) {
+      // Save questions (filter out questions with empty prompts)
+      const validQuestions = formData.questions.filter(
+        (q) => q.prompt && q.prompt.trim().length > 0
+      );
+      
+      if (validQuestions.length > 0) {
+        // Remove id fields from questions when creating new form
+        const questionsToSave = validQuestions.map(({ id, ...q }, idx) => ({
+          ...q,
+          order_index: idx,
+        }));
+        
         const questionsRes = await fetch(`/api/forms/${form.id}/questions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            questions: formData.questions,
+            questions: questionsToSave,
           }),
         });
 
         if (!questionsRes.ok) {
-          throw new Error('Failed to save questions');
+          const errorData = await questionsRes.json().catch(() => ({}));
+          console.error('Questions API error:', errorData);
+          const errorMessage = errorData.details
+            ? `Validation error: ${JSON.stringify(errorData.details)}`
+            : errorData.error || 'Failed to save questions';
+          throw new Error(errorMessage);
         }
       }
 

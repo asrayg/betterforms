@@ -45,6 +45,7 @@ export async function POST(
       prompt: q.prompt,
       required: q.required,
       options: q.options || null,
+      validation: q.validation || null,
     }));
 
     const { data, error } = await supabase
@@ -59,14 +60,16 @@ export async function POST(
 
     return NextResponse.json({ questions: data });
   } catch (error: any) {
+    console.error('Error in questions route:', error);
     if (error.name === 'ZodError') {
+      console.error('Validation errors:', error.errors);
       return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

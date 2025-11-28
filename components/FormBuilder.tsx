@@ -511,14 +511,19 @@ export function FormBuilder({
         </div>
       </div>
 
-      <div className="flex justify-end gap-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : 'Save Form'}
-        </button>
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-500">
+          {questions.length} question{questions.length !== 1 ? 's' : ''}
+        </div>
+        <div className="flex justify-end gap-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
+          >
+            {loading ? 'Saving...' : 'Save Form'}
+          </button>
+        </div>
       </div>
     </form>
   );

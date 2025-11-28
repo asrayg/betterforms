@@ -69,7 +69,12 @@ export function EditFormClient({ initialForm }: EditFormClientProps) {
       );
 
       if (!questionsRes.ok) {
-        throw new Error('Failed to save questions');
+        const errorData = await questionsRes.json().catch(() => ({}));
+        console.error('Questions API error:', errorData);
+        const errorMessage = errorData.details
+          ? `Validation error: ${JSON.stringify(errorData.details)}`
+          : errorData.error || 'Failed to save questions';
+        throw new Error(errorMessage);
       }
 
       router.refresh();

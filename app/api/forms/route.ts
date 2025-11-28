@@ -35,14 +35,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: any) {
+    console.error('Error in forms route:', error);
     if (error.name === 'ZodError') {
+      console.error('Validation errors:', error.errors);
       return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
