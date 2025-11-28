@@ -15,6 +15,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: 'File size exceeds maximum limit of 10MB' },
+        { status: 400 }
+      );
+    }
+
     const supabase = createServiceRoleClient();
     const tempId = `temp-${Date.now()}`;
     const filePath = `forms/${formId}/responses/${tempId}/${questionId}.webm`;

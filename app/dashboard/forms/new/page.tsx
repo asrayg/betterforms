@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Question } from '@/lib/types';
 import { FormBuilder } from '@/components/FormBuilder';
+import toast from 'react-hot-toast';
 
 export default function NewFormPage() {
   const router = useRouter();
@@ -56,10 +57,11 @@ export default function NewFormPage() {
         }
       }
 
+      toast.success('Form created successfully!');
       router.push(`/dashboard/forms/${form.id}/edit`);
     } catch (error) {
       console.error('Error saving form:', error);
-      alert('Failed to save form. Please try again.');
+      toast.error('Failed to save form. Please try again.');
     } finally {
       setLoading(false);
     }

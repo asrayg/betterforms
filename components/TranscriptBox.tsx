@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, RefreshCw, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface TranscriptBoxProps {
   transcript: string;

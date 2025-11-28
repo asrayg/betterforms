@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Question } from '@/lib/types';
 import { FormBuilder } from './FormBuilder';
+import toast from 'react-hot-toast';
 
 interface EditFormClientProps {
   initialForm: {
@@ -72,10 +73,10 @@ export function EditFormClient({ initialForm }: EditFormClientProps) {
       }
 
       router.refresh();
-      alert('Form saved successfully!');
+      toast.success('Form saved successfully!');
     } catch (error) {
       console.error('Error saving form:', error);
-      alert('Failed to save form. Please try again.');
+      toast.error('Failed to save form. Please try again.');
     } finally {
       setLoading(false);
     }

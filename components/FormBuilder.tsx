@@ -107,7 +107,7 @@ export function FormBuilder({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('Please enter a form title');
+      // Will be handled by required attribute, but keeping for safety
       return;
     }
 

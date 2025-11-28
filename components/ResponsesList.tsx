@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ResponseWithAnswers } from '@/lib/types';
 import { ResponseDetail } from './ResponseDetail';
+import { ResponseSkeleton } from './LoadingSkeleton';
 
 interface ResponsesListProps {
   formId: string;
@@ -31,7 +32,16 @@ export function ResponsesList({ formId }: ResponsesListProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-600">Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <ResponseSkeleton />
+        </div>
+        <div className="lg:col-span-2">
+          <ResponseSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (responses.length === 0) {

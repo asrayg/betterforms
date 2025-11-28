@@ -75,7 +75,7 @@ export function VoiceRecorder({
       }, 1000);
     } catch (error) {
       console.error('Error starting recording:', error);
-      alert('Failed to access microphone. Please check permissions.');
+      toast.error('Failed to access microphone. Please check permissions.');
     }
   };
 
@@ -98,6 +98,13 @@ export function VoiceRecorder({
 
   const handleUploadAndTranscribe = async () => {
     if (!recordedBlob) return;
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (recordedBlob.size > maxSize) {
+      toast.error('Audio file is too large. Maximum size is 10MB. Please record a shorter audio.');
+      return;
+    }
 
     setIsTranscribing(true);
     try {
@@ -132,9 +139,10 @@ export function VoiceRecorder({
 
       const { transcript } = await transcribeRes.json();
       onTranscript(transcript, publicUrl);
+      toast.success('Audio transcribed successfully!');
     } catch (error: any) {
       console.error('Error uploading/transcribing:', error);
-      alert(error.message || 'Failed to transcribe audio. Please try again.');
+      toast.error(error.message || 'Failed to transcribe audio. Please try again.');
     } finally {
       setIsTranscribing(false);
     }

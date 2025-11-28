@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Question } from '@/lib/types';
 import { VoiceRecorder } from './VoiceRecorder';
 import { TranscriptBox } from './TranscriptBox';
+import toast from 'react-hot-toast';
 
 interface FormSubmissionProps {
   formId: string;
@@ -165,12 +166,12 @@ export function FormSubmission({ formId, questions, settings }: FormSubmissionPr
     // Validate email if required
     if (settings?.collect_email) {
       if (!respondentEmail.trim()) {
-        alert('Please enter your email address');
+        toast.error('Please enter your email address');
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(respondentEmail)) {
-        alert('Please enter a valid email address');
+        toast.error('Please enter a valid email address');
         return;
       }
     }
@@ -180,14 +181,14 @@ export function FormSubmission({ formId, questions, settings }: FormSubmissionPr
     for (const question of requiredQuestions) {
       const answer = answers[question.id!]?.answer_text;
       if (!answer?.trim()) {
-        alert(`Please answer the required question: ${question.prompt}`);
+        toast.error(`Please answer the required question: ${question.prompt}`);
         return;
       }
       
       // Validate answer format
       const error = validateAnswer(question, answer);
       if (error) {
-        alert(`${question.prompt}: ${error}`);
+        toast.error(`${question.prompt}: ${error}`);
         return;
       }
     }
@@ -213,10 +214,11 @@ export function FormSubmission({ formId, questions, settings }: FormSubmissionPr
         throw new Error(error.error || 'Failed to submit form');
       }
 
+      toast.success('Form submitted successfully!');
       setSubmitted(true);
     } catch (error: any) {
       console.error('Error submitting form:', error);
-      alert(error.message || 'Failed to submit form. Please try again.');
+      toast.error(error.message || 'Failed to submit form. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -458,7 +460,7 @@ export function FormSubmission({ formId, questions, settings }: FormSubmissionPr
                         updateAnswer(question.id!, transcript, audioUrl, transcript);
                       } catch (error: any) {
                         console.error('Error re-transcribing:', error);
-                        alert(error.message || 'Failed to transcribe audio. Please try again.');
+                        toast.error(error.message || 'Failed to transcribe audio. Please try again.');
                       }
                     }}
                     onRemove={() => {
