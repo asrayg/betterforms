@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Question } from '@/lib/types';
 import { VoiceRecorder } from './VoiceRecorder';
+import { TranscriptBox } from './TranscriptBox';
 
 interface FormSubmissionProps {
   formId: string;
@@ -29,14 +30,82 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
     audioUrl?: string,
     transcript?: string
   ) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: {
-        answer_text: value,
-        audio_url: audioUrl || prev[questionId]?.audio_url,
-        transcript_text: transcript || prev[questionId]?.transcript_text,
-      },
-    }));
+    setAnswers((prev) => {
+      const currentAnswer = prev[questionId];
+      
+      // If transcript is provided, append to existing text (or set if empty)
+      // Otherwise, just update with the value (user typing)
+      let newText = value;
+      if (transcript !== undefined) {
+        newText = currentAnswer?.answer_text
+          ? `${currentAnswer.answer_text}\n\n${transcript}`
+          : transcript;
+      }
+      
+      return {
+        ...prev,
+        [questionId]: {
+          answer_text: newText,
+          audio_url: audioUrl !== undefined ? audioUrl : currentAnswer?.audio_url,
+          transcript_text: transcript !== undefined ? transcript : currentAnswer?.transcript_text,
+        },
+      };
+    });
+  };
+
+  const updateTranscriptText = (questionId: string, newTranscript: string) => {
+    setAnswers((prev) => {
+      const currentAnswer = prev[questionId];
+      const currentText = currentAnswer?.answer_text || '';
+      const transcriptText = currentAnswer?.transcript_text || '';
+      
+      // Replace the transcript portion in answer_text with the edited version
+      let newText = currentText;
+      if (transcriptText && currentText.includes(transcriptText)) {
+        newText = currentText.replace(transcriptText, newTranscript);
+      } else if (currentText.endsWith('\n\n' + transcriptText)) {
+        newText = currentText.replace('\n\n' + transcriptText, '\n\n' + newTranscript);
+      } else {
+        // If transcript is at the end, replace it
+        newText = currentText.replace(new RegExp(transcriptText + '$'), newTranscript);
+      }
+      
+      return {
+        ...prev,
+        [questionId]: {
+          ...currentAnswer,
+          answer_text: newText,
+          transcript_text: newTranscript,
+        },
+      };
+    });
+  };
+
+  const removeAudio = (questionId: string) => {
+    setAnswers((prev) => {
+      const currentAnswer = prev[questionId];
+      const currentText = currentAnswer?.answer_text || '';
+      const transcriptText = currentAnswer?.transcript_text || '';
+      
+      // Remove the transcript portion from answer_text
+      let newText = currentText;
+      if (transcriptText) {
+        // Remove transcript and any preceding newlines
+        newText = currentText
+          .replace(new RegExp('\\n\\n' + transcriptText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'), '')
+          .replace(new RegExp(transcriptText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'), '')
+          .trim();
+      }
+      
+      return {
+        ...prev,
+        [questionId]: {
+          answer_text: newText,
+          audio_url: null,
+          transcript_text: null,
+        },
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,28 +179,73 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
               onChange={(e) =>
                 updateAnswer(question.id!, e.target.value)
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
               required={question.required}
             />
           )}
 
           {question.type === 'long' && (
             <div className="space-y-3">
-              <textarea
-                value={answers[question.id!]?.answer_text || ''}
-                onChange={(e) =>
-                  updateAnswer(question.id!, e.target.value)
-                }
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Type your answer or use voice recording..."
-                required={question.required}
-              />
+              <div className="relative">
+                <textarea
+                  value={answers[question.id!]?.answer_text || ''}
+                  onChange={(e) => {
+                    const currentAnswer = answers[question.id!];
+                    updateAnswer(
+                      question.id!,
+                      e.target.value,
+                      currentAnswer?.audio_url,
+                      undefined
+                    );
+                  }}
+                  rows={6}
+                  className="w-full px-4 py-2 pr-24 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Type your answer or use voice recording..."
+                  required={question.required}
+                />
+                {answers[question.id!]?.audio_url && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <AudioBox
+                      audioUrl={answers[question.id!]!.audio_url!}
+                      isTranscribing={false}
+                      onReTranscribe={async () => {
+                        const audioUrl = answers[question.id!]?.audio_url;
+                        if (!audioUrl) return;
+                        
+                        try {
+                          const transcribeRes = await fetch('/api/transcribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ audio_url: audioUrl }),
+                          });
+
+                          if (!transcribeRes.ok) {
+                            throw new Error('Transcription failed');
+                          }
+
+                          const { transcript } = await transcribeRes.json();
+                          // Replace the textarea content with new transcript
+                          updateAnswer(question.id!, transcript, audioUrl, transcript);
+                        } catch (error: any) {
+                          console.error('Error re-transcribing:', error);
+                          alert(error.message || 'Failed to transcribe audio. Please try again.');
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
               <VoiceRecorder
                 formId={formId}
                 questionId={question.id!}
+                currentAudioUrl={answers[question.id!]?.audio_url}
                 onTranscript={(transcript, audioUrl) => {
-                  updateAnswer(question.id!, transcript, audioUrl, transcript);
+                  // Append transcript to existing text or replace if empty
+                  const currentText = answers[question.id!]?.answer_text || '';
+                  const newText = currentText
+                    ? `${currentText}\n\n${transcript}`
+                    : transcript;
+                  updateAnswer(question.id!, newText, audioUrl, transcript);
                 }}
               />
             </div>

@@ -106,7 +106,7 @@ export function FormBuilder({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Untitled Form"
             required
           />
@@ -119,7 +119,7 @@ export function FormBuilder({
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             rows={3}
             placeholder="Form description (optional)"
           />
@@ -154,7 +154,7 @@ export function FormBuilder({
                     onChange={(e) =>
                       updateQuestion(index, { prompt: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="Question prompt"
                   />
                 </div>
@@ -171,7 +171,7 @@ export function FormBuilder({
                             newOptions[optIdx] = e.target.value;
                             updateQuestion(index, { options: newOptions });
                           }}
-                          className="flex-1 px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          className="flex-1 px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder={`Option ${optIdx + 1}`}
                         />
                         <button
@@ -217,7 +217,7 @@ export function FormBuilder({
                             : null,
                       });
                     }}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="short">Short Answer</option>
                     <option value="long">Long Answer</option>

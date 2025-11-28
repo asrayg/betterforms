@@ -13,24 +13,28 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
+        get(name: string) {
+          return request.cookies.get(name)?.value;
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+        set(name: string, value: string, options: any) {
+          request.cookies.set(name, value);
           response = NextResponse.next({
             request,
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+          response.cookies.set(name, value, options);
+        },
+        remove(name: string, options: any) {
+          request.cookies.set(name, '');
+          response = NextResponse.next({
+            request,
+          });
+          response.cookies.set(name, '', { ...options, maxAge: 0 });
         },
       },
     }
   );
 
+  // Refresh session if expired - required for Server Components
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -45,6 +49,11 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from login
   if (request.nextUrl.pathname === '/login' && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Allow auth callback to proceed without redirect
+  if (request.nextUrl.pathname.startsWith('/auth/callback')) {
+    return response;
   }
 
   return response;

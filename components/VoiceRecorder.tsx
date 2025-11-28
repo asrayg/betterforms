@@ -2,18 +2,19 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Play, Pause } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 
 interface VoiceRecorderProps {
   onTranscript: (transcript: string, audioUrl: string) => void;
   formId: string;
   questionId: string;
+  currentAudioUrl?: string | null;
 }
 
 export function VoiceRecorder({
   onTranscript,
   formId,
   questionId,
+  currentAudioUrl,
 }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -100,26 +101,23 @@ export function VoiceRecorder({
 
     setIsTranscribing(true);
     try {
-      const supabase = createClient();
-      const tempId = `temp-${Date.now()}`;
-      const filePath = `forms/${formId}/responses/${tempId}/${questionId}.webm`;
+      // Upload through API route (uses service role, bypasses RLS)
+      const formData = new FormData();
+      formData.append('file', recordedBlob, 'audio.webm');
+      formData.append('formId', formId);
+      formData.append('questionId', questionId);
 
-      // Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('audio')
-        .upload(filePath, recordedBlob, {
-          contentType: 'audio/webm',
-          upsert: false,
-        });
+      const uploadRes = await fetch('/api/upload-audio', {
+        method: 'POST',
+        body: formData,
+      });
 
-      if (uploadError) {
-        throw uploadError;
+      if (!uploadRes.ok) {
+        const error = await uploadRes.json();
+        throw new Error(error.error || 'Upload failed');
       }
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('audio').getPublicUrl(filePath);
+      const { url: publicUrl } = await uploadRes.json();
 
       // Transcribe
       const transcribeRes = await fetch('/api/transcribe', {
@@ -134,9 +132,9 @@ export function VoiceRecorder({
 
       const { transcript } = await transcribeRes.json();
       onTranscript(transcript, publicUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading/transcribing:', error);
-      alert('Failed to transcribe audio. Please try again.');
+      alert(error.message || 'Failed to transcribe audio. Please try again.');
     } finally {
       setIsTranscribing(false);
     }
@@ -164,6 +162,7 @@ export function VoiceRecorder({
       };
     }
   }, [audioUrl]);
+
 
   return (
     <div className="space-y-3">
@@ -247,6 +246,7 @@ export function VoiceRecorder({
           )}
         </div>
       )}
+      
     </div>
   );
 }

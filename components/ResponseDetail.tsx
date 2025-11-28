@@ -36,13 +36,13 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 
             {answer.question.type === 'long' && (
               <div className="space-y-3">
-                <div className="text-gray-700 whitespace-pre-wrap">
+                <div className="text-gray-900 whitespace-pre-wrap text-base">
                   {answer.answer_text}
                 </div>
 
                 {answer.audio_url && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                    <div className="flex items-center gap-3 mb-2">
+                  <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-gray-700">
                         Audio Recording:
                       </span>
@@ -51,16 +51,6 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
                         Your browser does not support the audio element.
                       </audio>
                     </div>
-                    {answer.transcript_text && (
-                      <div className="mt-3">
-                        <p className="text-xs text-gray-600 mb-1">
-                          Original Transcript:
-                        </p>
-                        <p className="text-sm text-gray-700 italic">
-                          {answer.transcript_text}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
