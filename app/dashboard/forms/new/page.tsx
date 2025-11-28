@@ -13,6 +13,12 @@ export default function NewFormPage() {
     title: string;
     description?: string;
     published: boolean;
+    settings?: {
+      collect_email?: boolean;
+      limit_one_response?: boolean;
+      show_progress_bar?: boolean;
+      confirmation_message?: string;
+    } | null;
     questions: Question[];
   }) => {
     setLoading(true);
@@ -25,6 +31,7 @@ export default function NewFormPage() {
           title: formData.title,
           description: formData.description,
           published: formData.published,
+          settings: formData.settings,
         }),
       });
 

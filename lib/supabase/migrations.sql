@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS forms (
   title TEXT NOT NULL,
   description TEXT,
   published BOOLEAN DEFAULT false,
+  settings JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -16,10 +17,11 @@ CREATE TABLE IF NOT EXISTS questions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
   order_index INTEGER NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('short', 'long', 'mcq')),
+  type TEXT NOT NULL CHECK (type IN ('short', 'long', 'mcq', 'checkbox', 'email', 'number', 'date', 'time', 'linear_scale')),
   prompt TEXT NOT NULL,
   required BOOLEAN DEFAULT false,
   options JSONB,
+  validation JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -28,8 +30,55 @@ CREATE TABLE IF NOT EXISTS responses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  respondent_meta JSONB
+  respondent_meta JSONB,
+  respondent_email TEXT
 );
+
+-- Add columns to existing tables if they don't exist (for existing databases)
+DO $$ 
+BEGIN
+  -- Add settings to forms if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'forms' AND column_name = 'settings'
+  ) THEN
+    ALTER TABLE forms ADD COLUMN settings JSONB;
+  END IF;
+
+  -- Add validation to questions if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'questions' AND column_name = 'validation'
+  ) THEN
+    ALTER TABLE questions ADD COLUMN validation JSONB;
+  END IF;
+
+  -- Add respondent_email to responses if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'responses' AND column_name = 'respondent_email'
+  ) THEN
+    ALTER TABLE responses ADD COLUMN respondent_email TEXT;
+  END IF;
+END $$;
+
+-- Update question type constraint if it exists
+DO $$
+BEGIN
+  -- Drop old constraint if it exists
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'questions_type_check' AND table_name = 'questions'
+  ) THEN
+    ALTER TABLE questions DROP CONSTRAINT questions_type_check;
+  END IF;
+  
+  -- Add new constraint with all question types
+  ALTER TABLE questions ADD CONSTRAINT questions_type_check 
+    CHECK (type IN ('short', 'long', 'mcq', 'checkbox', 'email', 'number', 'date', 'time', 'linear_scale'));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Answers table
 CREATE TABLE IF NOT EXISTS answers (
@@ -46,6 +95,7 @@ CREATE TABLE IF NOT EXISTS answers (
 CREATE INDEX IF NOT EXISTS idx_forms_owner_id ON forms(owner_id);
 CREATE INDEX IF NOT EXISTS idx_questions_form_id ON questions(form_id);
 CREATE INDEX IF NOT EXISTS idx_responses_form_id ON responses(form_id);
+CREATE INDEX IF NOT EXISTS idx_responses_respondent_email ON responses(respondent_email);
 CREATE INDEX IF NOT EXISTS idx_answers_response_id ON answers(response_id);
 CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);
 

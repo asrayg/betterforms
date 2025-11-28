@@ -11,6 +11,12 @@ interface EditFormClientProps {
     title: string;
     description?: string;
     published: boolean;
+    settings?: {
+      collect_email?: boolean;
+      limit_one_response?: boolean;
+      show_progress_bar?: boolean;
+      confirmation_message?: string;
+    } | null;
     questions: Question[];
   };
 }
@@ -23,6 +29,12 @@ export function EditFormClient({ initialForm }: EditFormClientProps) {
     title: string;
     description?: string;
     published: boolean;
+    settings?: {
+      collect_email?: boolean;
+      limit_one_response?: boolean;
+      show_progress_bar?: boolean;
+      confirmation_message?: string;
+    } | null;
     questions: Question[];
   }) => {
     setLoading(true);
@@ -35,6 +47,7 @@ export function EditFormClient({ initialForm }: EditFormClientProps) {
           title: formData.title,
           description: formData.description,
           published: formData.published,
+          settings: formData.settings,
         }),
       });
 

@@ -47,7 +47,11 @@ export default async function PublicFormPage({
           {form.description && (
             <p className="text-gray-600 mb-8">{form.description}</p>
           )}
-          <FormSubmission formId={form.id} questions={sortedQuestions} />
+          <FormSubmission 
+            formId={form.id} 
+            questions={sortedQuestions}
+            settings={form.settings}
+          />
         </div>
       </div>
     </div>

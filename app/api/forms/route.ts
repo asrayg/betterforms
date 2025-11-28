@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
         title: validated.title,
         description: validated.description,
         published: validated.published,
+        settings: validated.settings || null,
       })
       .select()
       .single();

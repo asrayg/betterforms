@@ -8,9 +8,15 @@ import { TranscriptBox } from './TranscriptBox';
 interface FormSubmissionProps {
   formId: string;
   questions: Question[];
+  settings?: {
+    collect_email?: boolean;
+    limit_one_response?: boolean;
+    show_progress_bar?: boolean;
+    confirmation_message?: string;
+  } | null;
 }
 
-export function FormSubmission({ formId, questions }: FormSubmissionProps) {
+export function FormSubmission({ formId, questions, settings }: FormSubmissionProps) {
   const [answers, setAnswers] = useState<
     Record<
       string,
@@ -21,6 +27,7 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
       }
     >
   >({});
+  const [respondentEmail, setRespondentEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -126,14 +133,61 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
     });
   };
 
+  const validateAnswer = (question: Question, answer: string | null | undefined): string | null => {
+    if (!answer) return null;
+
+    if (question.type === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(answer)) {
+        return 'Please enter a valid email address';
+      }
+    }
+
+    if (question.type === 'number') {
+      const num = parseFloat(answer);
+      if (isNaN(num)) {
+        return 'Please enter a valid number';
+      }
+      if (question.validation?.min !== undefined && num < question.validation.min) {
+        return `Value must be at least ${question.validation.min}`;
+      }
+      if (question.validation?.max !== undefined && num > question.validation.max) {
+        return `Value must be at most ${question.validation.max}`;
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email if required
+    if (settings?.collect_email) {
+      if (!respondentEmail.trim()) {
+        alert('Please enter your email address');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(respondentEmail)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+    }
 
     // Validate required questions
     const requiredQuestions = questions.filter((q) => q.required);
     for (const question of requiredQuestions) {
-      if (!answers[question.id!]?.answer_text?.trim()) {
+      const answer = answers[question.id!]?.answer_text;
+      if (!answer?.trim()) {
         alert(`Please answer the required question: ${question.prompt}`);
+        return;
+      }
+      
+      // Validate answer format
+      const error = validateAnswer(question, answer);
+      if (error) {
+        alert(`${question.prompt}: ${error}`);
         return;
       }
     }
@@ -150,6 +204,7 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
             audio_url: answer.audio_url,
             transcript_text: answer.transcript_text,
           })),
+          respondent_email: settings?.collect_email ? respondentEmail : null,
         }),
       });
 
@@ -174,13 +229,52 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Response Submitted!
         </h2>
-        <p className="text-gray-600">Thank you for your response.</p>
+        <p className="text-gray-600">
+          {settings?.confirmation_message || 'Thank you for your response.'}
+        </p>
       </div>
     );
   }
 
+  const totalQuestions = questions.length;
+  const answeredQuestions = Object.keys(answers).filter(
+    (qId) => answers[qId]?.answer_text?.trim()
+  ).length;
+  const progress = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {settings?.show_progress_bar && (
+        <div className="mb-6">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Progress</span>
+            <span>{answeredQuestions} of {totalQuestions}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {settings?.collect_email && (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-900">
+            Email Address <span className="text-red-600">*</span>
+          </label>
+          <input
+            type="email"
+            value={respondentEmail}
+            onChange={(e) => setRespondentEmail(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+            placeholder="your.email@example.com"
+          />
+        </div>
+      )}
+
       {questions.map((question, index) => (
         <div key={question.id || index} className="space-y-2">
           <label className="block text-sm font-medium text-gray-900">
@@ -200,6 +294,139 @@ export function FormSubmission({ formId, questions }: FormSubmissionProps) {
               className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
               required={question.required}
             />
+          )}
+
+          {question.type === 'email' && (
+            <input
+              type="email"
+              value={answers[question.id!]?.answer_text || ''}
+              onChange={(e) =>
+                updateAnswer(question.id!, e.target.value)
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required={question.required}
+              placeholder="example@email.com"
+            />
+          )}
+
+          {question.type === 'number' && (
+            <input
+              type="number"
+              value={answers[question.id!]?.answer_text || ''}
+              onChange={(e) =>
+                updateAnswer(question.id!, e.target.value)
+              }
+              min={question.validation?.min}
+              max={question.validation?.max}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required={question.required}
+              placeholder={
+                question.validation?.min !== undefined || question.validation?.max !== undefined
+                  ? `${question.validation?.min || ''} - ${question.validation?.max || ''}`
+                  : 'Enter a number'
+              }
+            />
+          )}
+
+          {question.type === 'date' && (
+            <input
+              type="date"
+              value={answers[question.id!]?.answer_text || ''}
+              onChange={(e) =>
+                updateAnswer(question.id!, e.target.value)
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required={question.required}
+            />
+          )}
+
+          {question.type === 'time' && (
+            <input
+              type="time"
+              value={answers[question.id!]?.answer_text || ''}
+              onChange={(e) =>
+                updateAnswer(question.id!, e.target.value)
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required={question.required}
+            />
+          )}
+
+          {question.type === 'checkbox' && (
+            <div className="space-y-2">
+              {question.options?.map((option, optIdx) => (
+                <label
+                  key={optIdx}
+                  className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    name={`question-${question.id}`}
+                    value={option}
+                    checked={
+                      answers[question.id!]?.answer_text?.includes(option) || false
+                    }
+                    onChange={(e) => {
+                      const currentAnswer = answers[question.id!]?.answer_text || '';
+                      const selectedOptions = currentAnswer
+                        ? currentAnswer.split(',').filter((opt) => opt.trim())
+                        : [];
+                      
+                      if (e.target.checked) {
+                        selectedOptions.push(option);
+                      } else {
+                        const index = selectedOptions.indexOf(option);
+                        if (index > -1) selectedOptions.splice(index, 1);
+                      }
+                      
+                      updateAnswer(question.id!, selectedOptions.join(', '));
+                    }}
+                    className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-gray-900">{option}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {question.type === 'linear_scale' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                <span>{question.validation?.min || 1}</span>
+                <span>{question.validation?.max || 5}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                {Array.from(
+                  { 
+                    length: (question.validation?.max || 5) - (question.validation?.min || 1) + 1 
+                  }, 
+                  (_, i) => {
+                    const value = (question.validation?.min || 1) + i;
+                    return (
+                      <label
+                        key={value}
+                        className="flex flex-col items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer flex-1"
+                      >
+                        <input
+                          type="radio"
+                          name={`question-${question.id}`}
+                          value={value.toString()}
+                          checked={
+                            answers[question.id!]?.answer_text === value.toString()
+                          }
+                          onChange={(e) =>
+                            updateAnswer(question.id!, e.target.value)
+                          }
+                          className="mb-2 h-4 w-4 text-primary-600 focus:ring-primary-500"
+                          required={question.required}
+                        />
+                        <span className="text-sm text-gray-900">{value}</span>
+                      </label>
+                    );
+                  }
+                )}
+              </div>
+            </div>
           )}
 
           {question.type === 'long' && (

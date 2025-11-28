@@ -14,7 +14,7 @@ export async function POST(
     // Check if form exists and is published
     const { data: form, error: formError } = await serviceSupabase
       .from('forms')
-      .select('id, published')
+      .select('id, published, settings')
       .eq('id', id)
       .single();
 
@@ -41,6 +41,23 @@ export async function POST(
       form_id: id,
     });
 
+    // Check if limit_one_response is enabled and email is provided
+    if (form.settings?.limit_one_response && validated.respondent_email) {
+      const { data: existingResponse } = await serviceSupabase
+        .from('responses')
+        .select('id')
+        .eq('form_id', id)
+        .eq('respondent_email', validated.respondent_email)
+        .single();
+
+      if (existingResponse) {
+        return NextResponse.json(
+          { error: 'You have already submitted a response to this form' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate required questions
     const requiredQuestionIds = new Set(
       questions?.filter((q) => q.required).map((q) => q.id) || []
@@ -66,6 +83,7 @@ export async function POST(
       .from('responses')
       .insert({
         form_id: id,
+        respondent_email: validated.respondent_email || null,
         respondent_meta: {
           userAgent,
           ...validated.respondent_meta,

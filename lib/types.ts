@@ -1,4 +1,13 @@
-export type QuestionType = 'short' | 'long' | 'mcq';
+export type QuestionType = 
+  | 'short' 
+  | 'long' 
+  | 'mcq' 
+  | 'checkbox' 
+  | 'email' 
+  | 'number' 
+  | 'date' 
+  | 'time' 
+  | 'linear_scale';
 
 export interface Question {
   id?: string;
@@ -8,6 +17,11 @@ export interface Question {
   prompt: string;
   required: boolean;
   options?: string[] | null;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+  } | null;
 }
 
 export interface Form {
@@ -16,6 +30,12 @@ export interface Form {
   title: string;
   description?: string | null;
   published: boolean;
+  settings?: {
+    collect_email?: boolean;
+    limit_one_response?: boolean;
+    show_progress_bar?: boolean;
+    confirmation_message?: string;
+  } | null;
   created_at: string;
 }
 

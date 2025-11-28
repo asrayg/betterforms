@@ -40,6 +40,7 @@ export default async function EditFormPage({
           title: form.title,
           description: form.description || '',
           published: form.published,
+          settings: form.settings,
           questions: (form.questions || []).sort(
             (a: any, b: any) => a.order_index - b.order_index
           ),

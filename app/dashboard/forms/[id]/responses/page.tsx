@@ -38,8 +38,18 @@ export default async function ResponsesPage({
         >
           ← Back to Dashboard
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{form.title}</h1>
-        <p className="text-gray-600">View and manage responses</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{form.title}</h1>
+            <p className="text-gray-600">View and manage responses</p>
+          </div>
+          <a
+            href={`/api/forms/${params.id}/export`}
+            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+          >
+            Export CSV
+          </a>
+        </div>
       </div>
 
       <ResponsesList formId={id} />
